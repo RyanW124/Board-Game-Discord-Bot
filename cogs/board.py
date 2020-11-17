@@ -4,6 +4,7 @@ import reversi as r
 import connect4 as c4
 import discord
 from string import ascii_lowercase as alphabet
+from Tools import senddm
 from discord.ext import commands
 import pickle, asyncio, os
 from PIL import Image, ImageDraw, ImageFont
@@ -94,20 +95,19 @@ class BoardGames(commands.Cog):
             if chess.Move.from_uci(move) in board.legal_moves:
                 board.push(chess.Move.from_uci(move))
                 await ctx.send("Completed move " + move)
-                dm = await self.bot.get_user(oppo).create_dm()
-                await dm.send(f"{ctx.author.name} moved " + move)
+                await senddm(self.bot.get_user(oppo), f"{ctx.author.name} moved " + move)
                 if board.is_game_over():
                     if board.is_checkmate():
-                        await dm.send(f"{ctx.author.name} won by checkmate")
+                        await senddm(self.bot.get_user(oppo), f"{ctx.author.name} won by checkmate")
                         await ctx.send(f"You checkmated {self.bot.get_user(oppo).name}")
                     elif board.is_stalemate():
-                        await dm.send(f"Game ended due to stalemate")
+                        await senddm(self.bot.get_user(oppo), f"Game ended due to stalemate")
                         await ctx.send(f"Game ended due to stalemate")
                     elif board.is_insufficient_material():
-                        await dm.send(f"Game ended due to insufficient material")
+                        await senddm(self.bot.get_user(oppo), f"Game ended due to insufficient material")
                         await ctx.send(f"Game ended due to insufficient material")
                     elif board.is_fivefold_repetition():
-                        await dm.send(f"Game ended due to repetition")
+                        await senddm(self.bot.get_user(oppo), f"Game ended due to repetition")
                         await ctx.send(f"Game ended due to repetition")
                     await self.chess_show(ctx.author, ctx.channel, data[ctx.author.id], ctx.message.id)
                     del data[oppo]
@@ -117,7 +117,7 @@ class BoardGames(commands.Cog):
                     pickle.dump(data, f)
             else:
                 await ctx.send("Illegal move")
-        except Error as f:
+        except Exception as f:
             print(f)
             await ctx.send("Invalid move")
 
@@ -228,19 +228,21 @@ class BoardGames(commands.Cog):
                 return
         oppo = self.bot.get_user(oppo)
         move = board.place(pos)
-        oppodm = await oppo.create_dm()
+
+
+
         if not move:
             await ctx.send("Illegal move")
             return
         elif move == True:
             await ctx.send("Placed at " + text)
-            await oppodm.send(f"{ctx.author.name} put a piece at {text}")
+            await senddm(oppo, f"{ctx.author.name} placed a piece at " + text)
         elif move == "Tie":
             await ctx.send(f"Game ended, tie")
-            await oppodm.send(f"Game ended, tie")
+            await senddm(oppo, f"Game ended, tie")
         else:
             await ctx.send(f"You Won")
-            await oppodm.send(f"Game ended, your opponent won")
+            await senddm(oppo, f"Game ended, your opponent won")
             await self.gshow(ctx.author, ctx.channel, data[ctx.author.id], ctx.message.id)
             with open("opposite.dat", "rb") as f:
                 oppos = pickle.load(f)
@@ -345,7 +347,7 @@ class BoardGames(commands.Cog):
         else:
             await ctx.send(f'{p2.name} declined')
 
-    @Gomoku.command(name=['show'])
+    @Gomoku.command(name='show')
     async def show_gomoku(self, ctx):
         """Shows the board"""
         with open('boards.dat', "rb") as f:
@@ -482,26 +484,26 @@ class BoardGames(commands.Cog):
                 return
         oppo = self.bot.get_user(oppo)
         move = board.place(pos)
-        oppodm = await oppo.create_dm()
+
         if not move:
             await ctx.send("Illegal move")
             return
         elif move == True:
             await ctx.send("Placed at " + text)
-            await oppodm.send(f"{ctx.author.name} put a piece at {text}")
+            await senddm(oppo, f"{ctx.author.name} put a piece at {text}")
         elif move == "pass":
             await ctx.send("Placed at " + text + ", your opponent got pass")
-            await oppodm.send(f"{ctx.author.name} put a piece at {text}, you got pass")
+            await senddm(oppo, f"{ctx.author.name} put a piece at {text}, you got pass")
         else:
             if move[0] > move[1]:
                 await ctx.send(f"Black wins {move[0]} to {move[1]}")
-                await oppodm.send(f"Black wins {move[0]} to {move[1]}")
+                await senddm(oppo, f"Black wins {move[0]} to {move[1]}")
             elif move[0] < move[1]:
                 await ctx.send(f"White wins {move[1]} to {move[0]}")
-                await oppodm.send(f"White wins {move[1]} to {move[0]}")
+                await senddm(oppo, f"White wins {move[1]} to {move[0]}")
             else:
                 await ctx.send(f"Its a tie")
-                await oppodm.send(f"Its a tie")
+                await senddm(oppo, f"Its a tie")
             await self.rshow(ctx.author, ctx.channel, data[ctx.author.id], ctx.message.id)
             with open("opposite.dat", "rb") as f:
                 oppos = pickle.load(f)
@@ -636,19 +638,20 @@ class BoardGames(commands.Cog):
             if board.turn:
                 await ctx.send("Its not your turn yet")
                 return
-        oppochannel = await self.bot.get_user(oppo).create_dm()
+        oppo = self.bot.get_user(oppo)
+
         x = board.place(column - 1)
         if x != False:
             await ctx.send(f"Placed a piece at column {column}")
-            await oppochannel.send(f"{ctx.author.name} placed a piece at column {column}")
+            await senddm(oppo, f"{ctx.author.name} placed a piece at column {column}")
             if x != "legal":
 
                 if x == 3:
                     await ctx.send("Tied")
-                    await oppochannel.send("Game ended, tied")
+                    await senddm(oppo, "Game ended, tied")
                 else:
                     await ctx.send("You won")
-                    await oppochannel.send(f"Game ended, {ctx.author.name} won")
+                    await senddm(oppo, f"Game ended, {ctx.author.name} won")
                 await self.cshow(ctx.author, ctx.channel, data[ctx.author.id], ctx.message.id)
                 del data[oppo]
                 del data[ctx.author.id]

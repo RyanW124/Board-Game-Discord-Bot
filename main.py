@@ -1,23 +1,17 @@
 from discord.ext import commands
 from discord import Status, Game
 import os, pickle, discord
+intents = discord.Intents().all()
+bot = commands.Bot(command_prefix='.', help_command=None, intents=intents)
 
-bot = commands.Bot(command_prefix='.', help_command=None)
 
 
-@bot.command()
-async def reload(ctx):
-    for filename in os.listdir('./cogs'):
-        if filename.endswith('.py'):
-            bot.unload_extension(f'cogs.{filename[:-3]}')
-            bot.load_extension(f'cogs.{filename[:-3]}')
-    await ctx.send('Done reloading')
 
 
 @bot.event
 async def on_ready():
     await bot.change_presence(activity=Game(name='.help'), status=Status.online)
-    for i in ['data', 'ads']:
+    for i in ['data', 'ads', 'mute', 'autorole']:
         try:
             with open(i+'.dat', 'rb'):
                 pass
@@ -33,8 +27,27 @@ async def on_ready():
             with open(i+'.dat', 'wb') as f:
                 pickle.dump({}, f)
             print(f'Made new {i}.dat file')
+    for filename in os.listdir('./cogs'):
+        if filename.endswith('.py'):
+            bot.load_extension(f'cogs.{filename[:-3]}')
+            print('Finish loading '+ filename[:-3])
     print('Allement is ready')
-
+@bot.command()
+async def reload(ctx):
+    for i in ['data', 'ads', 'mute', 'autorole']:
+        try:
+            os.remove(f'{i}.dat')
+        except FileNotFoundError:
+            pass
+        with open(i + '.dat', 'wb') as f:
+            pickle.dump([], f)
+    for i in ['boards', 'opposite']:
+        try:
+            os.remove(f'{i}.dat')
+        except FileNotFoundError:
+            pass
+        with open(i + '.dat', 'wb') as f:
+            pickle.dump({}, f)
 '''
 @bot.event
 async def on_command_error(ctx, error):
@@ -46,8 +59,6 @@ async def on_command_error(ctx, error):
         pass
     await ctx.send(embed=embed)
 '''
-for filename in os.listdir('./cogs'):
-    if filename.endswith('.py'):
-        bot.load_extension(f'cogs.{filename[:-3]}')
+
 
 bot.run('Nzc0OTExNTgxODYzNTQyODA0.X6eqpg.cq-By4oxryW225Tci0eO1JeRVhE')

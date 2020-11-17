@@ -2,13 +2,37 @@ import discord, asyncio, pickle
 from discord.ext import commands
 from Model import Server, Member, Advertisement
 from copy import deepcopy
+from Tools import senddm
 
 class ServerList(commands.Cog):
 
     def __init__(self, bot):
         self.bot : commands.Bot = bot
         self.hidden = False
+        self.staff_list = []
+    async def is_staff(ctx):
+        return ctx.author.id in []
 
+    @commands.command()
+    @commands.check(is_staff)
+    async def delete(self, ctx, guild_id, *, reason):
+        """Hide"""
+        with open('ads.dat', 'rb') as f:
+            data = pickle.load(f)
+        for i in deepcopy(data):
+            if i.id == guild_id:
+                data.remove(i)
+                guild = await self.bot.get_guild(i.id)
+                if guild:
+                    embed = discord.Embed()
+                    embed.title = 'Your advertisement have been taken down'
+                    embed.description = f'Reason: {reason}'
+                    embed.color = discord.Color.red()
+                    senddm(guild.owner, embed, True)
+                await ctx.send('Done')
+                break
+        with open('ads.dat', 'wb') as f:
+            pickle.dump(data, f)
 
     @commands.command()
     @commands.is_owner()
@@ -34,16 +58,16 @@ class ServerList(commands.Cog):
             return
         description = message.content
         embed = discord.Embed(title="You have 30 seconds to choose the color")
-        colors = {'♥️': (discord.Color.red(), 'Red'), '💚️': (discord.Color.green(), 'Green'),
+        colors = {'♥️': (discord.Color.red(), 'Red'), '💚': (discord.Color.green(), 'Green'),
                   '💛': (discord.Color.from_rgb(255, 255, 0), 'Yellow'),
                   '💙': (discord.Color.blue(), 'Blue'), '💜': (discord.Color.purple(), 'Purple'),
                   '🧡': (discord.Color.orange(), 'Orange')}
         for e in colors:
-            embed.add_field(name=f'{e}: {colors[e][1]}', value='\n', inline=False)
+            embed.add_field(name=f'{e}: {colors[e][1]}', value='**\n**', inline=False)
         choose_color_message: discord.Message = await ctx.send(embed=embed)
         [await choose_color_message.add_reaction(e) for e in colors]
         try:
-            def check(message):
+            def check(reaction, user):
                 return user == ctx.author and reaction.message.id == choose_color_message.id and reaction.emoji in colors
 
             reaction, user = await self.bot.wait_for('reaction_add', timeout=30.0, check=check)
@@ -86,10 +110,19 @@ class ServerList(commands.Cog):
         for i in deepcopy(data):
             if i.id == ctx.guild.id:
                 data.remove(i)
-        ad = Advertisement(ctx.guild.id, description, invite, color)
+        ad = Advertisement(ctx.guild.id, description, invite.url, color[0])
         data.append(ad)
         await ctx.send("Here's the sample page of the advertisement")
-        await ctx.send(embed=ad.embed(ctx.guild.name, ctx.guild.icon_url))
+        embed = discord.Embed()
+        embed.title = self.bot.get_guild(ctx.guild.id).name if self.bot.get_guild(ctx.guild.id) else str(ctx.guild.id)
+        embed.description = description
+        embed.color = color[0]
+        embed.add_field(name='Invite: ', value=invite.url, inline=False)
+        embed.add_field(name='Member Count: ',value=str(len(ctx.guild.members)), inline=False)
+        if ctx.guild:
+            if ctx.guild.icon_url:
+                embed.set_thumbnail(url=ctx.guild.icon_url)
+        await ctx.send(embed=embed)
         with open('ads.dat', 'wb') as f:
             pickle.dump(data, f)
 
@@ -116,7 +149,7 @@ class ServerList(commands.Cog):
             pickle.dump(data, f)
 
     @commands.command(aliases=['list'])
-    async def all(self, ctx, page_num : int):
+    async def all(self, ctx, page_num : int = 1):
         n=10
         with open('ads.dat', 'rb') as f:
             data = pickle.load(f)
@@ -157,9 +190,9 @@ class ServerList(commands.Cog):
         embed.color = server.color
         embed.add_field(name='Invite: ', value=server.invite, inline=False)
         embed.add_field(name='Member Count: ', value=str(len(self.bot.get_guild(ctx.guild.id).members)) if self.bot.get_guild(ctx.guild.id) else 'N/A', inline=False)
-
-        if self.bot.get_guild(ctx.guild.id).icon_url:
-            embed.set_thumbnail(url=self.bot.get_guild(ctx.guild.id).icon_url)
+        if self.bot.get_guild(ctx.guild.id):
+            if self.bot.get_guild(ctx.guild.id).icon_url:
+                embed.set_thumbnail(url=self.bot.get_guild(ctx.guild.id).icon_url)
         await ctx.send(embed=embed)
 
 
