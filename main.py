@@ -3,7 +3,7 @@ from discord import Status, Game
 import os, pickle, discord
 intents = discord.Intents().all()
 bot = commands.Bot(command_prefix='.', help_command=None, case_insensitive=True, intents=intents)
-
+#hi
 @bot.event
 async def on_ready():
     await bot.change_presence(activity=Game(name='.help'), status=Status.online)
