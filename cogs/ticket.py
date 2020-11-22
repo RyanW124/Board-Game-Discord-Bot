@@ -113,6 +113,7 @@ class Tickets(commands.Cog):
                                                         perms.view_channel = True
                                                         await cat.set_permissions(staff, overwrite=perms,
                                                                                   reason="Staff")
+                                                await senddm(users, discord.Embed(title="You opened a ticket", color=discord.Color.green()), True)
                                                 c = await cat.create_text_channel(f'{users.name}\'s ticket')
                                                 embed = discord.Embed(color=discord.Color.blue())
                                                 embed.title = users.name
@@ -125,7 +126,8 @@ class Tickets(commands.Cog):
                                                     staff = server.get_role(tag)
                                                     if staff:
                                                         mentions += staff.mention + ' '
-                                                await c.send(mentions)
+                                                if mentions != '':
+                                                    await c.send(mentions)
                                                 i.new_ticket(users.id, c.id)
                                                 # embed = discord.Embed()
                                                 # embed.title = f'✅ Success: Created ticket at {c.mention}'
@@ -270,7 +272,8 @@ class Tickets(commands.Cog):
                     staff = ctx.guild.get_role(tag)
                     if staff:
                         mentions += staff.mention + ' '
-                await c.send(mentions)
+                if mentions != '':
+                    await c.send(mentions)
                 server.new_ticket(ctx.author.id, c.id)
                 embed = discord.Embed()
                 embed.title = f'✅ Success: Created ticket at {c.mention}'

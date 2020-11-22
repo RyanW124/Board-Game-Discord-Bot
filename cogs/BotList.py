@@ -1,6 +1,6 @@
 import discord, asyncio, pickle
 from discord.ext import commands
-from Model import Server, Member, Advertisement
+from Model import Advertisement
 from copy import deepcopy
 from Tools import senddm
 
@@ -35,6 +35,7 @@ class ServerList(commands.Cog):
             pickle.dump(data, f)
 
     @commands.command()
+    @commands.guild_only()
     @commands.is_owner()
     async def new(self, ctx):
         await ctx.send("You have 30 seconds to type out the description (Maximum 300 characters")
@@ -107,9 +108,10 @@ class ServerList(commands.Cog):
         with open('ads.dat', 'rb') as f:
             data = pickle.load(f)
         invite = await channel.create_invite(reason='Server List Invite', unique=True)
-        for i in deepcopy(data):
-            if i.id == ctx.guild.id:
-                data.remove(i)
+        for i in range(len(data)):
+            if data[i].id == ctx.guild.id:
+                data.remove(data[i])
+                break
         ad = Advertisement(ctx.guild.id, description, invite.url, color[0])
         data.append(ad)
         await ctx.send("Here's the sample page of the advertisement")
@@ -118,7 +120,7 @@ class ServerList(commands.Cog):
         embed.description = description
         embed.color = color[0]
         embed.add_field(name='Invite: ', value=invite.url, inline=False)
-        embed.add_field(name='Member Count: ',value=str(len(ctx.guild.members)), inline=False)
+        embed.add_field(name='Member Count: ', value=str(len(ctx.guild.members)), inline=False)
         if ctx.guild:
             if ctx.guild.icon_url:
                 embed.set_thumbnail(url=ctx.guild.icon_url)
@@ -128,6 +130,7 @@ class ServerList(commands.Cog):
 
     @commands.command(aliases=['rm'])
     @commands.is_owner()
+    @commands.guild_only()
     async def remove(self, ctx):
         with open('ads.dat', 'rb') as f:
             data = pickle.load(f)
@@ -150,7 +153,7 @@ class ServerList(commands.Cog):
 
     @commands.command(aliases=['list'])
     async def all(self, ctx, page_num : int = 1):
-        n=10
+        n = 10
         with open('ads.dat', 'rb') as f:
             data = pickle.load(f)
 

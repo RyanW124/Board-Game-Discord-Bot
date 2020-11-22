@@ -11,9 +11,8 @@ class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot: commands.Bot = bot
         self.hidden = False
-    @commands.Cog.listener()
-    async def on_ready(self):
         self.check_mute.start()
+
 
     @tasks.loop(seconds=15)
     async def check_mute(self):

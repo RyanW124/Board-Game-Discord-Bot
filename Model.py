@@ -64,8 +64,36 @@ class Ticket:
     def __init__(self, id, ch_id):
         self.id = id
         self.ch_id = ch_id
+
 class Autorole:
     def __init__(self, id, ch_id, roles):
         self.id = id
         self.ch_id = ch_id
         self.roles = roles
+
+
+class Users:
+
+    def __init__(self, id):
+        self.id = id
+        self.reset()
+
+    def reset(self):
+        self.coins = 500
+        self.inventory = {}
+
+    @classmethod
+    def search(cls, id, array):
+        for i in array:
+            if i.id == id:
+                return i
+        return None
+
+class Poll:
+    def __init__(self, id, ch_id, question, answers, multi=1):
+        self.id: int = id
+        self.ch_id: int = ch_id
+        self.question: str = question
+        self.answers: dict = answers
+        self.multi: int = multi
+

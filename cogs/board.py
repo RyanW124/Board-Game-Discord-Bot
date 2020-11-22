@@ -368,6 +368,46 @@ class BoardGames(commands.Cog):
     async def Reversi(self, ctx):
         pass
 
+    @commands.command()
+    async def show(self, ctx):
+        """Shows the board"""
+        with open('boards.dat', "rb") as f:
+            data = pickle.load(f)
+        if ctx.author.id in data:
+
+            if data[ctx.author.id].turn:
+                await ctx.send("Black to move...")
+            else:
+                await ctx.send("White to move...")
+            if type(data[ctx.author.id]) == r.Board:
+                await self.rshow(ctx.author, ctx.channel, data[ctx.author.id], ctx.message.id)
+            elif type(data[ctx.author.id]) == chess.Board:
+                await self.chess_show(ctx.author, ctx.channel, data[ctx.author.id], ctx.message.id)
+            elif type(data[ctx.author.id]) == c4.Board:
+                await self.cshow(ctx.author, ctx.channel, data[ctx.author.id], ctx.message.id)
+            elif type(data[ctx.author.id]) == g.Board:
+                await self.gshow(ctx.author, ctx.channel, data[ctx.author.id], ctx.message.id)
+        else:
+            await ctx.send("You don't have a game in progress.")
+
+    @commands.command()
+    async def end(self, ctx):
+        with open("boards.dat", "rb") as f:
+            data = pickle.load(f)
+        with open("opposite.dat", "rb") as f:
+            oppo = pickle.load(f)
+        if ctx.author.id in data:
+            del data[ctx.author.id]
+            if ctx.author.id in oppo:
+                del data[oppo[ctx.author.id]]
+                del oppo[oppo[ctx.author.id]]
+                del oppo[ctx.author.id]
+
+            await ctx.send("Ended game")
+            with open("boards.dat", "wb") as f:
+                pickle.dump(data, f)
+        else:
+            await ctx.send("You don't have a game in progress.")
     @Reversi.command(name='new')
     @commands.guild_only()
     @commands.bot_has_guild_permissions(add_reactions=True)
