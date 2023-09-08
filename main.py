@@ -95,4 +95,4 @@ except:
             pass
         with open(i + '.dat', 'wb') as f:
             pickle.dump({}, f)
-    bot.run('Nzc0OTExNTgxODYzNTQyODA0.X6eqpg.cq-By4oxryW225Tci0eO1JeRVhE')
+    bot.run(input("code: "))
